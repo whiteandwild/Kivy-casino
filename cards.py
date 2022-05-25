@@ -9,7 +9,7 @@ class card:
         self.symbol = symbol
         self.figure = figure
         self.score = cards_symbols[symbol][1]  + cards_orders[figure][1] * 10
-        self.src = f"{cards_orders[figure][0]}_of_{cards_symbols[symbol][0]}.png"
+        self.src = f"photos/{cards_orders[figure][0]}_of_{cards_symbols[symbol][0]}.png"
 
     def __str__(self) -> str:
         return f'{self.symbol}{self.figure}'
