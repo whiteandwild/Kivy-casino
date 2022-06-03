@@ -10,6 +10,7 @@ class user:
         self.totalBets = 0
         self.isHidden = False
         self.Active = True
+        self.Autologin = False
     def __str__(self) -> str: #print info about user
         return f'{self.user_name}   balance : {self.balance} | total bets {self.totalBets}'
 

@@ -1,32 +1,5 @@
-import os , time ,threading
+
 from cards import *
-
-
-decision_time = 10000
-
-to_print = []
-
-def wait_for_valid_input(l):
-    
-    while l[0] not in ["up" , "down"]:
-        
-        l[0] = input("Którą opcje wybierasz |up| , |down| :    ")
-
-
-def printer():
-    for elem in to_print:
-        print(elem)
-def timer():
-    time_spend = 0
-    while time_spend < decision_time:
-        # print(decision_time-time_spend , flush=False , end=None )
-        print(f"Pozostały czas {((decision_time-time_spend)/1000):.1f}")
-        time.sleep(0.1)
-        time_spend += 100
-        
-        
-        
-
 
 
 def main_loop():
