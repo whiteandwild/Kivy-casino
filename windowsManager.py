@@ -41,3 +41,10 @@ if __name__ == '__main__':
     Window.minimum_width, Window.minimum_height = Window.size 
     
     TestApp().run()
+
+# To do:
+#   - CardA gets smaller once round finish
+#   - Timer text - You lose , You win
+#   - CardA + CardsB background red or green if you lose or win
+#   - animate step 1
+#   - animate step 3

@@ -18,6 +18,7 @@ from kivy.properties import StringProperty, NumericProperty
 from cards import *
 
 # Other
+import time
 from globals import *
 
 class LowerHigher(Screen):
@@ -62,8 +63,9 @@ class LowerHigher(Screen):
         holder.add_widget(self.Rightside)
 
         self.timer = Timer()
+        self.BW = BettingWindow()
         self.Rightside.add_widget(self.timer)
-        self.Rightside.add_widget(BettingWindow()) # Temp object
+        self.Rightside.add_widget(self.BW) # Temp object
 
         
         self.LoadStart() # Load start button 
@@ -76,8 +78,8 @@ class LowerHigher(Screen):
     
     def LoadTimer(self):
         self.timer.padding = "100dp"
-        self.timer.add_widget(Label(font_size= "50dp" ,text = 'Time left:'))
         self.timer.add_widget(self.timer.clock)
+        self.timer.clock.init()
         self.GS.change_state(False)
 
     def LoadStart(self):
@@ -93,6 +95,7 @@ class LowerHigher(Screen):
         self.timer.clear_widgets()
         if mode == 1:
             self.LoadTimer()
+            self.timer.clock.anim.bind(on_complete = self.finishRound)
             self.timer.clock.start()
 
     def startRound(self , *args):
@@ -108,6 +111,22 @@ class LowerHigher(Screen):
         self.CardB = choose_random_card(self.currentCards)
         self.currentCards.remove(self.CardB)
         self.GS.Cardshow.show_card(self.CardA.src , 0)
+    
+    def finishRound(self , animation, incr_crude_clock):
+        self.timer.clock.text = "End"
+        self.GS.roundEnd_disable()
+        self.BW.BetButton.disabled = True # Lock betting
+
+        x = self.GS.choosed # User input
+
+        if x != None:
+            result = compare_cards(self.CardA , self.CardB , x)
+    
+            print(f'{"You win" if result else "You lose"}')
+
+        time.sleep(0.5)
+
+        self.GS.Cardshow.show_card(self.CardB.src , 1) # Show second card
 
 """
 Left side
@@ -189,6 +208,7 @@ class GameScreen(BoxLayout):
         self.RGS.padding = 5
         self.RGS.spacing = 5
         self.RGS.orientation = 'vertical'
+        self.choosed = None
 
         a = AnchorLayout(anchor_x = "center" , anchor_y = "top") # Wrapper
 
@@ -226,6 +246,7 @@ class GameScreen(BoxLayout):
        
         if obj.state == 'normal': # Toggle normal on double click at the same button
             obj.background_color = (obj.background_color[0] , obj.background_color[1], obj.background_color[2] , 1)
+            self.choosed = None
             return
 
         # Apply normal state for all
@@ -234,11 +255,19 @@ class GameScreen(BoxLayout):
             child.state = 'normal'
 
         obj.state = 'down' # Apply down state for pressed button
+        match obj.text:
+            case "Higher" : self.choosed = 1
+            case "Joker" : self.choosed = 0
+            case "Lower" : self.choosed = -1
         obj.background_color = (obj.background_color[0] , obj.background_color[1], obj.background_color[2] , 0.5)
 
     def change_state(self , new_state): # Disable / Enable all buttons
         for child in self.RGS.holder.children:
             child.disabled = new_state
+
+    def roundEnd_disable(self):
+        for child in self.RGS.holder.children:
+            if child.state == 'normal': child.disabled = True
 
 
 class CardShow(BoxLayout): # Show 2 cards 
@@ -265,8 +294,8 @@ class CardShow(BoxLayout): # Show 2 cards
                
                 self.bind(pos = update_line,size = update_line)
         ##########################
-        self.A = Image(size_hint = (0.4 , 1) , source = "photos/sus_card.png" , keep_ratio = True , allow_stretch = True )
-        self.B = Image(size_hint = (0.4 , 1) , source = "photos/sus_card.png" , keep_ratio = True , allow_stretch = True )
+        self.A = Image(size_hint = (0.6 , 1) , source = "photos/sus_card.png" , keep_ratio = True , allow_stretch = True )
+        self.B = Image(size_hint = (0.6 , 1) , source = "photos/sus_card.png" , keep_ratio = True , allow_stretch = True )
         self.add_widget(self.A)
         self.add_widget(self.B)
     def reset(self):
@@ -321,22 +350,20 @@ class IncrediblyCrudeClock(Label): # Stolen from stackOverflow
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.font_size= "50dp"
+        self.halign = "center"
 
-    def start(self):
+    def init(self):
         Animation.cancel_all(self)  # stop any current animations
         self.anim = Animation(a=0, duration=self.a)
         
-        def finish_callback(animation, incr_crude_clock):
-            incr_crude_clock.text = "0"
-
-        self.anim.bind(on_complete=finish_callback)
+    
+    def start(self):
         self.anim.start(self)
-
     def stop(self):
         self.anim.stop()
 
     def on_a(self, instance, value):
-        self.text = str(round(value, 1))
+        self.text = "Time left:\n" + str(round(value, 1))
 
 class BettingWindow(BoxLayout):
     def __init__(self, **kwargs):

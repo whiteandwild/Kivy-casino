@@ -36,9 +36,11 @@ choose_random_card = lambda cards : random.choice(cards) # Rolls 1 card
 def compare_cards(cardA , cardB , t):
     """
     t - > 1 look for higher card
-    t - > 0 look for lower card
+    t - > 0 look for joker
+    t - > -1 look for lower card
     """
-    return cardA.score > cardB.score if t else cardA.score < cardB.score 
+    match t:
+        case 1: return cardA.score < cardB.score
+        case -1: return cardA.score > cardB.score
+        case 0 : return cardB.figure == "joker"
     
-def remove_card(cards , c):
-    cards.remove(c)
