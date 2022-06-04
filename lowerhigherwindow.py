@@ -15,10 +15,12 @@ from kivy.uix.label import Label
 from kivy.animation import Animation
 from kivy.uix.textinput import TextInput
 from kivy.properties import StringProperty, NumericProperty
-from cards import *
+from kivy.clock import Clock
+
 
 # Other
 import time
+from cards import *
 from globals import *
 
 class LowerHigher(Screen):
@@ -65,7 +67,7 @@ class LowerHigher(Screen):
         self.timer = Timer()
         self.BW = BettingWindow()
         self.Rightside.add_widget(self.timer)
-        self.Rightside.add_widget(self.BW) # Temp object
+        self.Rightside.add_widget(self.BW)
 
         
         self.LoadStart() # Load start button 
@@ -75,9 +77,11 @@ class LowerHigher(Screen):
         """
         self.add_widget(holder)
         
+        self.currentStreak = 1
     
     def LoadTimer(self):
         self.timer.padding = "100dp"
+        self.timer.clear_widgets()
         self.timer.add_widget(self.timer.clock)
         self.timer.clock.init()
         self.GS.change_state(False)
@@ -88,46 +92,97 @@ class LowerHigher(Screen):
         b.background_color = hex_to_kv("#DED5CA" , 0.9)
         b.background_normal = ""
         b.background_down = ""
-        b.bind(on_press = lambda *args : self.swap(mode=1))
+
         self.timer.add_widget(b)
 
     def swap(self , mode): # Swaps timer elements
         self.timer.clear_widgets()
         if mode == 1:
-            self.LoadTimer()
-            self.timer.clock.anim.bind(on_complete = self.finishRound)
-            self.timer.clock.start()
 
-    def startRound(self , *args):
-        self.currentCards = self.cards[:]
-        self.ThrownCards = []
-        self.CB.box.clear_widgets()
-        for i in range(10): #roll 10 cards to throw
-            tmp = choose_random_card(self.currentCards)
-            self.currentCards.remove(tmp)
-            self.CB.box.add_card(tmp.src)
-        self.CardA = choose_random_card(self.currentCards)
-        self.currentCards.remove(self.CardA)
+            self.LoadTimer()
+            self.timer.clock.init()
+            self.timer.clock.anim.bind(on_complete = self.finishRound)
+           
+
+        elif mode == 0:
+            self.LoadStart()
+
+    def startRound(self ,is_new_game = True, *args):
+        
+        if is_new_game:
+            self.currentCards = self.cards[:]
+            self.ThrownCards = []
+            self.CB.box.clear_self()
+
+            for i in range(10): #roll 10 cards to throw
+                tmp = choose_random_card(self.currentCards)
+                self.currentCards.remove(tmp)
+                self.CB.box.add_card(tmp.src)
+
+            self.CardA = choose_random_card(self.currentCards)
+            self.currentCards.remove(self.CardA)
+        self.swap(1)
+        self.timer.clock.start()
+
         self.CardB = choose_random_card(self.currentCards)
         self.currentCards.remove(self.CardB)
         self.GS.Cardshow.show_card(self.CardA.src , 0)
+
+        self.GS.roundStart()
+        self.BW.BetButton.disabled = False
     
     def finishRound(self , animation, incr_crude_clock):
+
+        def part2(*args):
+            self.GS.Cardshow.show_card(self.CardB.src , 1) # Show second card
+            
+            if result == True:
+                self.timer.clock.text = "You win\n:)"
+                self.currentStreak += 1
+                Clock.schedule_once(winning , 1.5)
+                return
+               
+            
+            elif result == False:
+                self.timer.clock.text ="You lose\n:("
+                self.currentStreak = 1
+                Clock.schedule_once(loosing , 1.5)
+
+            Clock.schedule_once(reset_widgets , 1)
+            
+
+        def reset_widgets(*args):
+            self.swap(0)
+            self.CB.box.generate_blank_cards()
+            self.GS.Cardshow.reset()
+            self.GS.roundStart()
+            self.GS.change_state(True)
+            
+
+        def winning(*args):
+            self.CB.box.add_card(self.CardA.src)
+            self.CardA = self.CardB # Replace cards
+            self.GS.Cardshow.reset()
+
+            self.startRound(is_new_game = False)
+        
+        def loosing(*args):
+            pass
+
         self.timer.clock.text = "End"
         self.GS.roundEnd_disable()
         self.BW.BetButton.disabled = True # Lock betting
 
         x = self.GS.choosed # User input
+        result = None
 
-        if x != None:
+        if x != None: 
             result = compare_cards(self.CardA , self.CardB , x)
     
-            print(f'{"You win" if result else "You lose"}')
+        self.GS.Cardshow.resize_card_A()
 
-        time.sleep(0.5)
-
-        self.GS.Cardshow.show_card(self.CardB.src , 1) # Show second card
-
+        Clock.schedule_once(part2 , 1)
+        
 """
 Left side
 """   
@@ -176,13 +231,9 @@ class Box(GridLayout): # Cards displayer
             self.bind(pos = update_rect,
                   size = update_rect)
         ##########################
-    
-        for i in range(10):
-            card = BoxCard()
-            card.source = "photos/sus_card.png"  # Blank card
-            card.keep_ratio = True
-            card.allow_stretch = True
-            self.add_widget(card)
+
+        self.generate_blank_cards()
+        
             
     def add_card(self,src):
         card = BoxCard()
@@ -191,6 +242,17 @@ class Box(GridLayout): # Cards displayer
         card.allow_stretch = True
         self.add_widget(card)
     
+    def generate_blank_cards(self):
+        self.clear_widgets()
+        for i in range(10):
+            card = BoxCard()
+            card.source = "photos/sus_card.png"  # Blank card
+            card.keep_ratio = True
+            card.allow_stretch = True
+            self.add_widget(card)
+
+    def clear_self(self):
+        self.clear_widgets()
   
 class BoxCard(Image):
     def __init__(self, **kwargs):
@@ -268,19 +330,28 @@ class GameScreen(BoxLayout):
     def roundEnd_disable(self):
         for child in self.RGS.holder.children:
             if child.state == 'normal': child.disabled = True
+    
+    def roundStart(self):
+        for child in self.RGS.holder.children:
+            child.disabled = False
+            child.state = "normal"
+            child.background_color = (child.background_color[0] , child.background_color[1], child.background_color[2] , 1)
+        self.choosed = None
 
 
 class CardShow(BoxLayout): # Show 2 cards 
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'horizontal'
         self.size_hint = (1 , 0.75)
         self.spacing = 5
         self.padding = 10
-        
+        self.s_hint_a = 1
         self.canvas_opacity = 0
         self.correct_color = "#337306"
         self.wrong_color = "#3232"
+        
 
         ##########################
         with self.canvas.before:
@@ -294,18 +365,36 @@ class CardShow(BoxLayout): # Show 2 cards
                
                 self.bind(pos = update_line,size = update_line)
         ##########################
-        self.A = Image(size_hint = (0.6 , 1) , source = "photos/sus_card.png" , keep_ratio = True , allow_stretch = True )
+        self.A = Image(size_hint = (0.6 , 1) , source = "photos/sus_card.png" , keep_ratio = True , allow_stretch = True , pos_hint = {"center_y" : 0.5} )
         self.B = Image(size_hint = (0.6 , 1) , source = "photos/sus_card.png" , keep_ratio = True , allow_stretch = True )
-        self.add_widget(self.A)
-        self.add_widget(self.B)
-    def reset(self):
+
+        self.Aholder = BoxLayout()
+        self.Bholder = BoxLayout()
+
+        self.Aholder.add_widget(self.A)
+        self.Bholder.add_widget(self.B)
+        self.add_widget(self.Aholder)
+        self.add_widget(self.Bholder)
+    def reset(self , mode = 1):
         self.A.source = "photos/sus_card.png"
         self.B.source = "photos/sus_card.png"
-        
+        self.A.size_hint = (0.6 , 1)
+      
     def show_card(self, src , index ):
         if index == 0: self.A.source = src
         elif index == 1: self.B.source = src
+
+    def resize_card_A(self):
+        Animation.cancel_all(self)
         
+        self.s_hint_a = 1
+        anim = Animation(s_hint_a = 0.7 , duration = 0.5)
+        
+        def progress(self , *args):
+            obj = args[0]
+            obj.A.size_hint = (0.6 * obj.s_hint_a, 1 * obj.s_hint_a)
+        anim.bind(on_progress = progress)
+        anim.start(self)
 
 class BetShow(BoxLayout):
     def __init__(self, **kwargs):
@@ -346,14 +435,17 @@ class Timer(BoxLayout):
 
         
 class IncrediblyCrudeClock(Label): # Stolen from stackOverflow 
-    a = NumericProperty(15)  # Seconds
+    a = NumericProperty(5) # Seconds
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.font_size= "50dp"
         self.halign = "center"
+      
 
     def init(self):
         Animation.cancel_all(self)  # stop any current animations
+        self.a = 5
         self.anim = Animation(a=0, duration=self.a)
         
     
@@ -361,7 +453,10 @@ class IncrediblyCrudeClock(Label): # Stolen from stackOverflow
         self.anim.start(self)
     def stop(self):
         self.anim.stop()
-
+    def reset(self):
+        self.a = 5
+    
+     
     def on_a(self, instance, value):
         self.text = "Time left:\n" + str(round(value, 1))
 
