@@ -5,7 +5,7 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout 
 from kivy.uix.boxlayout import BoxLayout 
-from kivy.graphics import Rectangle, Color , Line
+from kivy.graphics import Rectangle, Color , Line , Callback
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
@@ -14,12 +14,12 @@ from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.label import Label
 from kivy.animation import Animation
 from kivy.uix.textinput import TextInput
-from kivy.properties import StringProperty, NumericProperty
+from kivy.properties import StringProperty, NumericProperty , ListProperty , ColorProperty
 from kivy.clock import Clock
-
+from kivy.uix.popup import Popup
 
 # Other
-import time
+
 from cards import *
 from globals import *
 
@@ -28,8 +28,9 @@ class LowerHigher(Screen):
         super().__init__(**kw)
         self.cards = generate_cards()
         self.name = 'LowerHigher'
+        self.playing = False
         self.bind(size=update_rect , pos=update_rect)
-
+        
         ##########################
         with self.canvas.before:
                 Color(rgb=hex_to_kv("#A6032F")) #background for whole window
@@ -77,8 +78,22 @@ class LowerHigher(Screen):
         """
         self.add_widget(holder)
         
-        self.currentStreak = 1
+        self.Buttons = BoxLayout(size_hint = (None , None) , size = (150 , 75) , pos_hint = {"right" : 1} , spacing = 5 , padding = 5)
+        self.Buttons.add_widget(Button(text = "INFO" , background_color = hex_to_kv("#DED5CA") , background_normal = ""))
+        self.Buttons.add_widget(Button(text = "MENU" , background_color = hex_to_kv("#DED5CA") , background_normal = "" , on_press = self.change_to_menu))
+
+        self.add_widget(self.Buttons)
+        
+
+        
+
+        storage.c_root = self
     
+    def on_leave(self, *args):
+        return_coins()
+        self.manager.remove_widget(self)
+        
+
     def LoadTimer(self):
         self.timer.padding = "100dp"
         self.timer.clear_widgets()
@@ -107,12 +122,18 @@ class LowerHigher(Screen):
         elif mode == 0:
             self.LoadStart()
 
+    """
+    Round Start / End 
+    """
     def startRound(self ,is_new_game = True, *args):
+        self.playing = True
         
         if is_new_game:
+
             self.currentCards = self.cards[:]
             self.ThrownCards = []
             self.CB.box.clear_self()
+            self.currentStreak = 1
 
             for i in range(10): #roll 10 cards to throw
                 tmp = choose_random_card(self.currentCards)
@@ -121,6 +142,8 @@ class LowerHigher(Screen):
 
             self.CardA = choose_random_card(self.currentCards)
             self.currentCards.remove(self.CardA)
+            
+        storage.c_root.GS.Betshow.Update_strike_bonus(self.currentStreak)
         self.swap(1)
         self.timer.clock.start()
 
@@ -137,52 +160,88 @@ class LowerHigher(Screen):
             self.GS.Cardshow.show_card(self.CardB.src , 1) # Show second card
             
             if result == True:
+                self.GS.Cardshow.animate_background(0)
                 self.timer.clock.text = "You win\n:)"
-                self.currentStreak += 1
-                Clock.schedule_once(winning , 1.5)
+                
+                self.currentStreak *= 1.5
+                
+                storage.current_bet = 0
+                make_bet(new_bet)
+
+                if self.currentStreak > 3.5:
+                    return_coins()
+                    
+                    Clock.schedule_once(reset_widgets , 3)
+
+                Clock.schedule_once(winning , 3)
+                
                 return
                
             
             elif result == False:
+                self.GS.Cardshow.animate_background(1)
                 self.timer.clock.text ="You lose\n:("
+                
                 self.currentStreak = 1
-                Clock.schedule_once(loosing , 1.5)
-
-            Clock.schedule_once(reset_widgets , 1)
+                Clock.schedule_once(reset_widgets , 3)
+            else:
+                self.BW.creds.update_balance(return_coins())
+                Clock.schedule_once(reset_widgets , 1)
             
 
         def reset_widgets(*args):
             self.swap(0)
+            self.BW.creds.update_balance(storage.current_user.balance)
             self.CB.box.generate_blank_cards()
             self.GS.Cardshow.reset()
             self.GS.roundStart()
             self.GS.change_state(True)
+            self.BW.BetButton.disabled = False
+            self.BW.bet_button()
+            storage.c_root.GS.Betshow.Reset_bet()
+            storage.c_root.GS.Betshow.Update_strike_bonus(1)
+            
+            
             
 
         def winning(*args):
             self.CB.box.add_card(self.CardA.src)
             self.CardA = self.CardB # Replace cards
             self.GS.Cardshow.reset()
-
+            self.BW.leave_button()
             self.startRound(is_new_game = False)
-        
-        def loosing(*args):
-            pass
+            
 
+            storage.c_root.GS.Betshow.Reset_bet()
+            storage.c_root.GS.Betshow.Change_bet(new_bet)
+        
+       
+        self.playing = False
         self.timer.clock.text = "End"
         self.GS.roundEnd_disable()
         self.BW.BetButton.disabled = True # Lock betting
 
         x = self.GS.choosed # User input
         result = None
+        new_bet = 0
 
         if x != None: 
             result = compare_cards(self.CardA , self.CardB , x)
-    
+            if storage.current_bet == 0: result = None
+            else:
+              new_bet = bet_end(result , self.currentStreak)
+        
+
         self.GS.Cardshow.resize_card_A()
 
         Clock.schedule_once(part2 , 1)
-        
+
+    def change_to_menu(self , *args):
+        # x = Popup(content=Label(text='Hello world'))
+        # x.open()
+        self.manager.current = 'mainmenu'
+
+
 """
 Left side
 """   
@@ -297,8 +356,10 @@ class GameScreen(BoxLayout):
 
 
         self.Cardshow = CardShow()
+        self.Betshow = BetShow(size_hint = (1 , 0.1))
         self.RGS.add_widget(self.Cardshow)
-        self.RGS.add_widget(BetShow(size_hint = (1 , 0.1)))
+
+        self.RGS.add_widget(self.Betshow)
         self.RGS.add_widget(self.RGS.holder)
 
         a.add_widget(self.RGS)
@@ -340,6 +401,9 @@ class GameScreen(BoxLayout):
 
 
 class CardShow(BoxLayout): # Show 2 cards 
+
+    
+    c_color = ColorProperty(hex_to_kv("#337306" , 0))
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -348,18 +412,19 @@ class CardShow(BoxLayout): # Show 2 cards
         self.spacing = 5
         self.padding = 10
         self.s_hint_a = 1
-        self.canvas_opacity = 0
+        self.canvas_opacity = 1
         self.correct_color = "#337306"
-        self.wrong_color = "#3232"
-        
+        self.wrong_color = "#BF0404"
+        self.op = 0
 
         ##########################
         with self.canvas.before:
-                Color(rgba=hex_to_kv(self.correct_color , self.canvas_opacity)) #background for whole window
+                Color(rgba=self.c_color)
                 self.rect = Rectangle(pos = self.pos,
                                   size =(self.width / 2.,
-                                        self.height / 2.))
+                                         self.height / 2.))
                 Color((0,0,0,1))
+                # self.cb = Callback(self.mycallback)
                 
                 self.line = Line(width = 2 , rectangle = (self.x+5 , self.y , self.width , self.height ))
                
@@ -373,8 +438,24 @@ class CardShow(BoxLayout): # Show 2 cards
 
         self.Aholder.add_widget(self.A)
         self.Bholder.add_widget(self.B)
+        
         self.add_widget(self.Aholder)
         self.add_widget(self.Bholder)
+
+    def redraw(self , pos , size):
+        self.canvas.before.clear()
+        with self.canvas.before:
+                Color(rgba=self.c_color)
+                self.rect = Rectangle(pos = self.pos,
+                                  size =(self.width,
+                                         self.height))
+                Color((0,0,0,1))
+                # self.cb = Callback(self.mycallback)
+                
+                self.line = Line(width = 2 , rectangle = (self.x+5 , self.y , self.width , self.height ))
+        
+        update_line(self)
+               
     def reset(self , mode = 1):
         self.A.source = "photos/sus_card.png"
         self.B.source = "photos/sus_card.png"
@@ -385,7 +466,7 @@ class CardShow(BoxLayout): # Show 2 cards
         elif index == 1: self.B.source = src
 
     def resize_card_A(self):
-        Animation.cancel_all(self)
+        
         
         self.s_hint_a = 1
         anim = Animation(s_hint_a = 0.7 , duration = 0.5)
@@ -396,19 +477,59 @@ class CardShow(BoxLayout): # Show 2 cards
         anim.bind(on_progress = progress)
         anim.start(self)
 
+    def animate_background(self , option):
+        
+        
+        def p(self , *args):
+           
+            obj = args[0]
+            obj.c_color = [obj.c_color[0],obj.c_color[1] ,obj.c_color[2] , obj.op]
+            obj.redraw(pos , size)
+        if option == 0: new_color = hex_to_kv(self.correct_color , 1)
+        elif option == 1: new_color = hex_to_kv(self.wrong_color ,  1)
+
+        def b(self , *args):
+            Clock.schedule_once(lambda x: args[0].b.start(args[0]) , 2.5)
+
+        pos = self.rect.pos
+        size = self.rect.size 
+        self.c_color = [new_color[0], new_color[1] ,new_color[2] , 0]
+        self.redraw(pos , size)
+        
+        
+        tmp = [new_color[0] , new_color[1] , new_color[2] , 0]
+        self.redraw(pos , size)
+        a = Animation(op = 1 , duration = 0.5)
+        a.bind(on_progress = p)
+        a.bind(on_complete = b)
+        self.b = Animation(op = 0 , duration = 0.25)
+        self.b.bind(on_progress = p)
+
+
+        a.start(self)
+        
+
 class BetShow(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.bet = 9999999
+        self.bet = 0
         self.L = Label(text = f"Current bet : {self.bet}")
-        self.L.font_size = "20dp"
+        self.J = Label(text = "Streak bonus : x1" , font_size = "20dp")
+        self.L.font_size = "30dp"
         self.add_widget(self.L)
+        self.add_widget(self.J)
 
     def Change_bet(self , bet):
-        self.bet = bet
-        self.L.text = f"Current bet : {self.bet}"
+        self.bet += int(bet)
+        self.L.text = f"Current bet : {str(self.bet)}"
 
+    def Reset_bet(self):
+        self.bet = 0
+        self.L.text = f"Current bet : {str(self.bet)}"
+
+    def Update_strike_bonus(self , bonus):
+        self.J.text = f"Streak bonus : x{str(bonus)}"
 """
 Right side
 """
@@ -435,7 +556,7 @@ class Timer(BoxLayout):
 
         
 class IncrediblyCrudeClock(Label): # Stolen from stackOverflow 
-    a = NumericProperty(5) # Seconds
+    a = NumericProperty(10) # Seconds
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -445,7 +566,7 @@ class IncrediblyCrudeClock(Label): # Stolen from stackOverflow
 
     def init(self):
         Animation.cancel_all(self)  # stop any current animations
-        self.a = 5
+        self.a = 10
         self.anim = Animation(a=0, duration=self.a)
         
     
@@ -453,9 +574,6 @@ class IncrediblyCrudeClock(Label): # Stolen from stackOverflow
         self.anim.start(self)
     def stop(self):
         self.anim.stop()
-    def reset(self):
-        self.a = 5
-    
      
     def on_a(self, instance, value):
         self.text = "Time left:\n" + str(round(value, 1))
@@ -464,6 +582,7 @@ class BettingWindow(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.size_hint = (1 , 0.5)
+
 
         Bet = BoxLayout(size_hint = (1 , 0.75) , pos_hint = {"center_y" : 0.5} , orientation = "vertical")
         ##########################
@@ -480,9 +599,12 @@ class BettingWindow(BoxLayout):
         ##########################
 
         self.creds = Credentials()
+
+        self.button_mode = 0 # 0 bet / 1 leave
         
         self.BetButton = BoxLayout(size_hint = (1 , 0.5) , padding = "13dp")
         self.b = Button(size_hint = (0.8 , 1) , text = "BET" , font_size = "70dp" ,background_disabled_normal = "" , background_normal = '', background_color = hex_to_kv("#DED5CA"))
+        self.b.bind(on_press = self.button_action)
 
         self.BetAmount = Betting()
 
@@ -495,8 +617,37 @@ class BettingWindow(BoxLayout):
 
 
         self.add_widget(Bet)
+
     def lock_bet(self):
         self.b.disabled = not self.b.disabled
+
+    def leave_button(self):
+        self.b.text = "LEAVE"
+        self.button_mode = 1
+
+    def bet_button(self):
+        self.b.text = "BET"
+        self.button_mode = 0
+    
+    def button_action(self , *args):
+        
+        
+        if self.button_mode:
+            storage.c_root.GS.Betshow.Change_bet(0)
+        else:
+            tmp = make_bet(int(self.BetAmount.CoinsInput.text))
+            
+            if tmp is not False:
+                
+                storage.c_root.BW.creds.update_balance(tmp)
+                storage.c_root.GS.Betshow.Change_bet(int(self.BetAmount.CoinsInput.text))
+                self.BetAmount.CoinsInput.text = "0"
+            else:
+                #   Not succesfull betting 
+                pass
+
+
+
 class Credentials(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -532,17 +683,29 @@ class Credentials(BoxLayout):
             balance.bind(pos = update_rect,size = update_rect)
         ##########################
 
-        name.add_widget(Label(text = "Koteczek_27" , font_size = "25dp" , color = (0 , 0, 0 , 1)))
+        name.add_widget(Label(text = storage.current_user.user_name , font_size = "25dp" , color = (0 , 0, 0 , 1)))
 
-        self.b = Label(text = "99999999 coins" , font_size = "25dp" , color = (0 , 0, 0 , 1))
+        self.b = Label(text = str(int(storage.current_user.balance)) + " Coins" , font_size = "25dp" , color = (0 , 0, 0 , 1))
         balance.add_widget(self.b)
 
         self.add_widget(name)
         self.add_widget(balance)
-    def update_balance(self):
-        global current_user
+    def update_balance(self , new_value):
+    
 
-        self.b.text = f'{current_user.balance} coins'
+        def p(self , *args):
+            obj = args[0]
+            obj.b.text = f'{str(int(obj.prev))} Coins'
+        self.prev = int(self.b.text.split()[0])
+        if self.prev == new_value : return
+        dur = 1 if abs(self.prev-new_value) < 10000 else 2
+
+        anim = Animation(prev = new_value , duration = dur)
+        anim.bind(on_progress = p)
+        anim.start(self)
+
+        self.b.text = f'{str(int(self.prev))} coins'
+
 class Betting(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -563,13 +726,10 @@ class Betting(BoxLayout):
         down.add_widget(Button(font_size = "17dp" , background_color = hex_to_kv("#F2BE22") , background_normal = "",text = "0" , on_press = lambda x : self.CoinsInput.mul_coins(0)))
         down.add_widget(Button(font_size = "17dp" , background_color = hex_to_kv("#1D594E") , background_normal = "",text = "1/2x" , on_press = lambda x : self.CoinsInput.mul_coins(0.5)))
         down.add_widget(Button(font_size = "17dp" , background_color = hex_to_kv("#F28705") , background_normal = "",text = "2x" , on_press = lambda x : self.CoinsInput.mul_coins(2)))
-        down.add_widget(Button(font_size = "17dp" , background_color = hex_to_kv("#F23030") , background_normal = "",text = "Max" , on_press = lambda x : self.CoinsInput.max()))
+        down.add_widget(Button(font_size = "17dp" , background_color = hex_to_kv("#F23030") , background_normal = "",text = "Max" , on_press = lambda x : self.CoinsInput.max_coins()))
         
         self.add_widget(upp)
        
-        
-        
-
         self.add_widget(self.CoinsInput)
         self.add_widget(down)
 
@@ -604,7 +764,7 @@ class AmountInput(TextInput):
             tmp = 999999
         self.text = str(tmp)
     def max_coins(self):
-        self.text = str(current_user.coins)
+        self.text = str(storage.current_user.balance)
     def on_size(self, instance, value):
         self.padding_y =  [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
     def on_text(self, instance, value):
@@ -615,10 +775,13 @@ class AmountInput(TextInput):
 
 
 def update_rect(obj, *args): # Update canvas rectangle for backgrounds
-        obj.rect.pos = obj.pos
-        obj.rect.size = obj.size
+
+    obj.rect.pos = obj.pos
+    obj.rect.size = obj.size
+   
 
 def update_line(obj , *args): # Update border pos for line and pos for rectangle
+
     obj.rect.pos = obj.pos
     obj.rect.size = obj.size
     obj.line.rectangle = (obj.x , obj.y , obj.width ,obj.height)

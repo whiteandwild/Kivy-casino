@@ -3,9 +3,10 @@ from errors import *
 from globals import *
 
 class user:
-    def __init__(self , user_name , password) -> None:
+    def __init__(self , user_name , password , is_guest) -> None:
         self.user_name = user_name
-        self.password = get_hashed_password(password)
+        if not is_guest:
+            self.password = get_hashed_password(password)
         self.balance = 1000
         self.totalBets = 0
         self.isHidden = False

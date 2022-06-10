@@ -4,7 +4,8 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.button import Button 
 from kivy.config import Config
-
+from kivy.clock import Clock
+from kivy.uix.screenmanager import FadeTransition
 ###   Set up starting window size
 Config.set('graphics', 'width', '1000')
 Config.set('graphics', 'height', '900')
@@ -12,7 +13,7 @@ Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 from kivy.core.window import Window # Must be after config setup
 # Screens
 from lowerhigherwindow import LowerHigher
-from Menuwindow import MenuScreen
+from menuwindow import MenuScreen
 
 # Other
 from globals import * 
@@ -24,15 +25,26 @@ class TestApp(App):
 
     def build(self):
         
-        sm = ScreenManager()
+        self.sm = ScreenManager(transition=FadeTransition())
 
         """
         Window priority system for easier ui programming
         """
-        screens = {1 : MenuScreen ,0 : LowerHigher}
-        for s in sorted(screens): sm.add_widget(screens[s]())
+        self.screens = {0 : MenuScreen ,1 : LowerHigher}
 
-        return sm
+        self.sm.add_widget(MenuScreen())
+        # for s in sorted(self.screens): self.sm.add_widget(self.screens[s]())
+        
+        create_guest()
+        return self.sm
+    def gen_screen(self, screen):
+        
+        x = eval(screen)()
+        self.sm.add_widget(x)
+        Clock.schedule_once( lambda z : self.change_screen(x.name), 0.5)
+    def change_screen(self , screen , *args):
+        self.sm.current = screen
+
 
 if __name__ == '__main__':
     
@@ -41,10 +53,3 @@ if __name__ == '__main__':
     Window.minimum_width, Window.minimum_height = Window.size 
     
     TestApp().run()
-
-# To do:
-#   - CardA gets smaller once round finish
-#   - Timer text - You lose , You win
-#   - CardA + CardsB background red or green if you lose or win
-#   - animate step 1
-#   - animate step 3
