@@ -23,9 +23,15 @@ from kivy.uix.popup import Popup
 from cards import *
 from globals import *
 
+# Problems:
+#   - Storage.c_root causes problems when going twice to same screen
+#   - Change it to more local variable
+
+
 class LowerHigher(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
+        
         self.cards = generate_cards()
         self.name = 'LowerHigher'
         self.playing = False
@@ -67,6 +73,7 @@ class LowerHigher(Screen):
 
         self.timer = Timer()
         self.BW = BettingWindow()
+        self.BW.ref = self
         self.Rightside.add_widget(self.timer)
         self.Rightside.add_widget(self.BW)
 
@@ -77,21 +84,27 @@ class LowerHigher(Screen):
         end
         """
         self.add_widget(holder)
+
+        self.menu = Button(text = "MENU" , background_color = hex_to_kv("#DED5CA") , background_normal = "" , on_press = self.change_to_menu)
         
+        print(id(self.menu))
         self.Buttons = BoxLayout(size_hint = (None , None) , size = (150 , 75) , pos_hint = {"right" : 1} , spacing = 5 , padding = 5)
-        self.Buttons.add_widget(Button(text = "INFO" , background_color = hex_to_kv("#DED5CA") , background_normal = ""))
-        self.Buttons.add_widget(Button(text = "MENU" , background_color = hex_to_kv("#DED5CA") , background_normal = "" , on_press = self.change_to_menu))
+        self.Buttons.add_widget(Button(text = "INFO" , background_color = hex_to_kv("#DED5CA") , background_normal = "" , on_press = self.info))
+        self.Buttons.add_widget(self.menu)
 
         self.add_widget(self.Buttons)
         
-
-        
-
         storage.c_root = self
     
     def on_leave(self, *args):
         return_coins()
+        try:
+            self.timer.clock.anim.cancel(self)
+        except:pass
+        
         self.manager.remove_widget(self)
+        
+        del self
         
 
     def LoadTimer(self):
@@ -143,7 +156,7 @@ class LowerHigher(Screen):
             self.CardA = choose_random_card(self.currentCards)
             self.currentCards.remove(self.CardA)
             
-        storage.c_root.GS.Betshow.Update_strike_bonus(self.currentStreak)
+        self.GS.Betshow.Update_strike_bonus(self.currentStreak)
         self.swap(1)
         self.timer.clock.start()
 
@@ -152,6 +165,17 @@ class LowerHigher(Screen):
         self.GS.Cardshow.show_card(self.CardA.src , 0)
 
         self.GS.roundStart()
+
+        self.count_jokers = 2
+        for card in self.ThrownCards:
+            if card.figure == "joker": self.count_jokers -= 1
+        if self.CardA.figure == "joker": self.count_jokers -= 1
+
+        if self.count_jokers == 0:
+            self.GS.jokerOff()
+        
+
+
         self.BW.BetButton.disabled = False
     
     def finishRound(self , animation, incr_crude_clock):
@@ -198,8 +222,9 @@ class LowerHigher(Screen):
             self.GS.change_state(True)
             self.BW.BetButton.disabled = False
             self.BW.bet_button()
-            storage.c_root.GS.Betshow.Reset_bet()
-            storage.c_root.GS.Betshow.Update_strike_bonus(1)
+            self.GS.Betshow.Reset_bet()
+            self.GS.Betshow.Update_strike_bonus(1)
+            self.menu.disabled = False
             
             
             
@@ -210,12 +235,11 @@ class LowerHigher(Screen):
             self.GS.Cardshow.reset()
             self.BW.leave_button()
             self.startRound(is_new_game = False)
-            
-
-            storage.c_root.GS.Betshow.Reset_bet()
-            storage.c_root.GS.Betshow.Change_bet(new_bet)
+            self.menu.disabled = False
+            self.GS.Betshow.Reset_bet()
+            self.GS.Betshow.Change_bet(new_bet)
         
-       
+        self.menu.disabled = True
         self.playing = False
         self.timer.clock.text = "End"
         self.GS.roundEnd_disable()
@@ -237,10 +261,77 @@ class LowerHigher(Screen):
         Clock.schedule_once(part2 , 1)
 
     def change_to_menu(self , *args):
-        # x = Popup(content=Label(text='Hello world'))
-        # x.open()
-        self.manager.current = 'mainmenu'
 
+    
+        if self.playing:
+            
+            def fun(*args):
+                popup.dismiss()
+                self.manager.current = 'mainmenu'
+                
+            c = BoxLayout(orientation = "vertical")
+            holder = BoxLayout()
+
+
+            l = Label(text = "Coins will return and you won't be able to continue current game" , color = [0,0,0,1]) 
+
+            
+
+
+
+            c.add_widget(l)
+            c.add_widget(holder)
+            
+
+            popup = Popup(title = "Are you sure??" , title_align = 'center',title_color= [0,0,0,1] , title_size = "30dp" , separator_color = "red" , size_hint =(0.75 , 0.2) , content = c)
+            popup.background = ""
+            popup.background_color = [1,1,1,0.9]
+
+
+
+            holder.add_widget(Button(text = "Yes" , on_press = fun ))
+            holder.add_widget(Button(text = "No , return to game" , on_press = popup.dismiss))
+            popup.open()
+        else:
+            self.manager.current = 'mainmenu'
+    def info(self , *args):
+
+        c = Label(halign="center",valign = "middle",font_size = "20dp",
+        text = """Lower/Higher game
+        Your goal is guessing if next card will be lower or higher that showed one.
+        You can also choose Joker but it's chances are very low.
+
+        Every new round we throw 10 cards away. You can see their symbol.
+        They won't be a part of cards pack this round anymore.
+
+        Rewards depends on probability of winning
+        Lower chance == Higher win
+
+        If you choose Joker:
+            - 1 joker in cards pack - x15 bet
+            - 2 joker in cards pack - x10 bet
+        
+        If you win , previous card will be throwed away
+        and you will gain win multipler (max 4 wins in a row)
+        Coins won will be stake of next round
+
+        If you don't choose , coins will return to you
+        
+        
+    
+        
+        """
+        
+        )
+        c.color = [0,0,0,1]
+        
+        
+
+        popup = Popup(title = "Info" ,title_color= [0,0,0,1] , title_size = "30dp" , separator_color = "red" ,content=c , size_hint = (0.75 , 0.75))
+        popup.background = ""
+        popup.background_color = [1,1,1,0.9]
+        popup.open()
+       
 
 """
 Left side
@@ -338,20 +429,20 @@ class GameScreen(BoxLayout):
         """
         more = ToggleButton(size_hint = (0.4 , 1) ,background_down = "",background_normal = "", background_color = hex_to_kv("#0CF25D") , background_disabled_down = "" , text = "Higher" , font_size = "50dp")
         
-        joker = ToggleButton(size_hint = (0.3 , 1), background_down = "", background_normal = "" , background_color = hex_to_kv("#F2A71B" , 1) , background_disabled_down = "" ,text = "Joker" , font_size = "50dp")
+        self.joker = ToggleButton(size_hint = (0.3 , 1), background_down = "", background_normal = "" , background_color = hex_to_kv("#F2A71B" , 1) , background_disabled_down = "" ,text = "Joker" , font_size = "50dp")
 
         less = ToggleButton(size_hint = (0.4 , 1) ,background_down = "", background_normal = "" , background_color = hex_to_kv("#F23005" , 1) , background_disabled_down = "" ,
         text = "Lower" , font_size = "50dp")
 
         more.bind(on_press=self.switch)
-        joker.bind(on_press=self.switch)
+        self.joker.bind(on_press=self.switch)
         less.bind(on_press=self.switch)
         """
         Add buttons
         """
         self.RGS.holder = BoxLayout(orientation = 'horizontal' , size_hint = (1 , 0.3) , spacing = 10 ,padding = (0 , 0 , 0 ,0))
         self.RGS.holder.add_widget(less)
-        self.RGS.holder.add_widget(joker)
+        self.RGS.holder.add_widget(self.joker)
         self.RGS.holder.add_widget(more)
 
 
@@ -398,6 +489,8 @@ class GameScreen(BoxLayout):
             child.state = "normal"
             child.background_color = (child.background_color[0] , child.background_color[1], child.background_color[2] , 1)
         self.choosed = None
+    def jokerOff(self):
+        self.joker.disabled = True
 
 
 class CardShow(BoxLayout): # Show 2 cards 
@@ -521,8 +614,8 @@ class BetShow(BoxLayout):
         self.add_widget(self.J)
 
     def Change_bet(self , bet):
-        self.bet += int(bet)
-        self.L.text = f"Current bet : {str(self.bet)}"
+        
+        self.L.text = f"Current bet : {str(storage.current_bet)}"
 
     def Reset_bet(self):
         self.bet = 0
@@ -573,7 +666,7 @@ class IncrediblyCrudeClock(Label): # Stolen from stackOverflow
     def start(self):
         self.anim.start(self)
     def stop(self):
-        self.anim.stop()
+        self.anim.stop(self)
      
     def on_a(self, instance, value):
         self.text = "Time left:\n" + str(round(value, 1))
@@ -582,6 +675,7 @@ class BettingWindow(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.size_hint = (1 , 0.5)
+  
 
 
         Bet = BoxLayout(size_hint = (1 , 0.75) , pos_hint = {"center_y" : 0.5} , orientation = "vertical")
@@ -630,17 +724,22 @@ class BettingWindow(BoxLayout):
         self.button_mode = 0
     
     def button_action(self , *args):
-        
+        print(self.parent.parent)
         
         if self.button_mode:
-            storage.c_root.GS.Betshow.Change_bet(0)
+
+            self.ref.GS.roundStart()
+            self.ref.timer.clock.stop()
+           
         else:
+            if self.BetAmount.CoinsInput.text == "0":return
+
             tmp = make_bet(int(self.BetAmount.CoinsInput.text))
             
             if tmp is not False:
                 
-                storage.c_root.BW.creds.update_balance(tmp)
-                storage.c_root.GS.Betshow.Change_bet(int(self.BetAmount.CoinsInput.text))
+                self.ref.BW.creds.update_balance(tmp)
+                self.ref.GS.Betshow.Change_bet(int(self.BetAmount.CoinsInput.text))
                 self.BetAmount.CoinsInput.text = "0"
             else:
                 #   Not succesfull betting 

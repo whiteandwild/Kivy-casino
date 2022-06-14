@@ -21,6 +21,8 @@ from globals import *
 
 
 
+
+
 class TestApp(App):
 
     def build(self):
@@ -36,12 +38,17 @@ class TestApp(App):
         # for s in sorted(self.screens): self.sm.add_widget(self.screens[s]())
         
         create_guest()
+        load_users_file()
+        # fix_accounts()
+      
         return self.sm
+
     def gen_screen(self, screen):
         
         x = eval(screen)()
         self.sm.add_widget(x)
         Clock.schedule_once( lambda z : self.change_screen(x.name), 0.5)
+
     def change_screen(self , screen , *args):
         self.sm.current = screen
 
@@ -53,3 +60,5 @@ if __name__ == '__main__':
     Window.minimum_width, Window.minimum_height = Window.size 
     
     TestApp().run()
+
+

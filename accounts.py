@@ -1,6 +1,7 @@
 import pickle , bcrypt #saving | hashing passwords
-from errors import *
-from globals import *
+
+from globals import storage
+
 
 class user:
     def __init__(self , user_name , password , is_guest) -> None:
@@ -23,30 +24,30 @@ def get_hashed_password(plain_text_password):
 def check_password(plain_text_password, hashed_password):
     return bcrypt.checkpw(plain_text_password, hashed_password)
 
-def save(): #saves accounts
+def save(): #saves storage.accounts
     with open("secret.pkl" , "wb") as secret:
-        pickle.dump(accounts , secret)
+        pickle.dump(storage.acc , secret)
 
 def create_account(user_name , password):
-    if user_name in accounts : return "User already exists"
+    if user_name in storage.accounts : return "User already exists"
 
-    accounts[user_name] = user(user_name , password)
+    storage.acc[user_name] = user(user_name , password)
     save()
     
     
 def login(user_name , password):
-    if user_name not in accounts: raise NoUserException # Not existing username
-    if accounts[user_name].Active == False : raise NoUserException # Account is disabled
+    if user_name not in storage.accounts: raise NoUserException # Not existing username
+    if storage.accounts[user_name].Active == False : raise NoUserException # Account is disabled
 
-    elif check_password(password ,accounts[user_name].password) == False: raise InvalidPassword # Wrong password
+    elif check_password(password ,storage.accounts[user_name].password) == False: raise InvalidPassword # Wrong password
 
     return True
 
-def load_users_file(): # Load accounts from secret file
-    global accounts
-
+def load_users_file(): # Load storage.accounts from secret file
+    
+    print(storage)
     try:
         with open("secret.pkl" , "rb") as secret:
-            accounts = pickle.load(secret)
+            storage.acc = pickle.load(secret)
     except:
-        accounts = {}
+        storage.acc = {}
