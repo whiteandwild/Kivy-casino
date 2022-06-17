@@ -1,5 +1,5 @@
 import pickle , bcrypt
-from errors import *
+
 
 
 class storage:
@@ -84,9 +84,10 @@ def create_account(user_name , password):
 
     storage.accounts[user_name] = user(user_name , password , is_guest= False)
     save()
+    return True
     
-def delete_accout(user_name):
-    if user_name in storage.accounts: return False
+def delete_account(user_name):
+    if user_name not in storage.accounts: return False
 
     del storage.accounts[user_name]
 

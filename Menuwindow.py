@@ -11,6 +11,9 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.image import Image
 from kivy.graphics import Rectangle, Color , Line , Ellipse
+from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.behaviors import ButtonBehavior
 # Other
 from globals import *
 
@@ -29,88 +32,88 @@ class MenuScreen(Screen):
 
         up = BoxLayout()
 
-        self.login = BetterInput(multiline = False , size_hint = (2, 1) , hint_text = "Enter username")
-        self.password = BetterInput(multiline = False , password = True , size_hint = (2, 1) , hint_text = "Enter password")
+        ##### References
+        self.login = BetterInput(multiline = False , size_hint = (2, 1) , hint_text = "username",pos_hint = {'center_y' : 0.8})
+        self.password = BetterInput(multiline = False , password = True , size_hint = (1, 1) , hint_text = "password")
+        self.info = Label(text = "" , color = "red" , font_size = "20dp")
+        self.rememberMe = CheckBox(size_hint = (0.05 , 1) , pos_hint = {"center_y" : 0.5} , color = [0,0,0,1])
+        #####
 
-        LogBox = BoxLayout(padding = ["40dp" , "60dp" , "40dp" , "60dp"])
+        self.password.ispasswd = True
+        self.login.ispasswd = False
 
-        LogBoxholder = BoxLayout(orientation = 'vertical')
+        LogBox = BoxLayout(padding = ["40dp" , "60dp" , "40dp" , "60dp"] , orientation = 'vertical')
+        
+ 
+        Al = AnchorLayout(anchor_x = "center") # Center Login widget
+        LogBox.add_widget(Al)
+
+        LogBoxholder = LBH(orientation = 'vertical' , size_hint = (None , 0.9) , width = 500)
+        Al.add_widget(LogBoxholder)
         add_bg(LogBoxholder , "#FFFFFF" , 0.8)
 
-        LogBox.add_widget(LogBoxholder)
-
-        LoginLogo = BoxLayout(size_hint = (0.4 , 0.6) , pos_hint = {'center_x' : 0.5})
-        Circle = BoxLayout(pos_hint = {'center_y' : 1})
-
-        Circle.add_widget(Button())
-        # with Circle.canvas:
-        #     Color(rgba = [1,0,1,1])
-        #     Circle.rect = Ellipse()
-        #     Circle.bind(pos = update_rect,size = update_circle)
         
-
+        LoginLogo = BoxLayout(size_hint = (0.5 , 1) , pos_hint = {'center_x' : 0.5})
+        
+        #####
+        Circle = BoxLayout() # Top logo
+        Circle.add_widget(Image(source = "photos/loginLogo.png" , keep_ratio = True , allow_stretch = True  , size_hint = (1.4 , 1.4) , pos_hint = {'center_y' : 1}))
         LoginLogo.add_widget(Circle)
+        #####
 
+        ##### Mid
+        Creds = BoxLayout(orientation = "vertical" ,padding = ["20dp" , 0 , "20dp" , 0] ,spacing = "10dp" , size_hint = (1 , 1.3))
 
-        Creds = BoxLayout(orientation = "vertical" ,padding = ["20dp" , 0 , "20dp" , 0] ,spacing = "10dp" , size_hint = (1 , 0.5))
-
-        u_name = BoxLayout(pos_hint = {"center_x" :0.1})
-        img = Image(source = "user.png",size_hint = (None , 1) ,width = 50 ,  keep_ratio = True , allow_stretch = True)
+        u_name = BoxLayout()
+        img = Image(source = "photos/user.png",size_hint = (None , 1) ,width = 50 ,  keep_ratio = True , allow_stretch = True , pos_hint = {'center_y' : 0.8})
         add_bg(img , "#FFAE00" , 1)
         u_name.add_widget(img)
         u_name.add_widget(self.login)
 
-        
-
         u_passwd = BoxLayout()
-        img = Image(source = "passwd.png",size_hint = (None , 1) ,width = 50 , keep_ratio = True , allow_stretch = True)
+        img = Image(source = "photos/passwd.png",size_hint = (None , 1) ,width = 50 , keep_ratio = True , allow_stretch = True ,pos_hint = {'center_y' : 0.8})
         add_bg(img , "#FFAE00" , 1)
         u_passwd.add_widget(img)
-        u_passwd.add_widget(self.password)
+        holderForPasswd = AnchorLayout(anchor_x = "right" , pos_hint = {'center_y' : 0.8}) 
+        holderForPasswd.add_widget(self.password)
+        holderForPasswd.add_widget(showhide(source = "photos/show.png" , on_press = self.Show_hide_passwd,size_hint = (0.2 , 0.85) , allow_stretch = True , keep_ratio = True))
+
+
+        u_passwd.add_widget(holderForPasswd)
+        # holderForPasswd.add_widget(Button(text = "Show" , on_press = self.Show_hide_passwd , size_hint = (0.3 , 0.5) ,background_color = [0,0,0,0] , color = [0 , 0, 0 ,1]  , font_size = "25dp"))
+
+
+        Extras = BoxLayout(size_hint = (0.9 , 0.4) , pos_hint = {"center_x" : 0.5})
+        RememberMe = BoxLayout(spacing = "10dp")
+        RememberMe.add_widget(self.rememberMe)
+        L = LeftLabel(text = "Don't log out" , color = [0,0,0,1] , halign = "left" , valign = "center" , font_size = "15dp")
+        RememberMe.add_widget(L)
+
+        Extras.add_widget(RememberMe)
+        Extras.add_widget(self.info)
 
         
         Creds.add_widget(u_name)
         Creds.add_widget(u_passwd)
+        Creds.add_widget(Extras)
+
+
+        # Buttons
+        Login_Buttons = BoxLayout(size_hint = (0.75 ,0.5),pos_hint = {"center_x" : 0.5} , spacing = "30dp")
+
+        Login_Buttons.add_widget(Button(pos_hint = {"center_y" : 0} ,font_name = "RobotoMono-Regular", text = "Log in" , on_press = self.Dologin , size_hint = (1 , 1) , background_normal = "" , background_color = hex_to_kv("#F2A71B" , 0.8) , color = [0,0,0,1] , font_size = "30dp"))
+        Login_Buttons.add_widget(Button(pos_hint = {"center_y" : 0} , font_name = "RobotoMono-Regular",text = "Sign up" , on_press = self.Dosignup ,background_normal = "" , background_color = hex_to_kv("#F2A71B" , 0.8) , color = [0,0,0,1] , font_size = "30dp"))
+
 
         LogBoxholder.add_widget(LoginLogo)
         LogBoxholder.add_widget(Creds)
-        LogBoxholder.add_widget(Button())
+        LogBoxholder.add_widget(Login_Buttons)
 
 
-        # holderForPasswd = AnchorLayout(size_hint = (0.75 , 0.3) , pos_hint = {"center_x" : 0.5}  , anchor_x = "right") 
-        # holderForPasswd.add_widget(self.password)
-        # holderForPasswd.add_widget(Button(text = "Show" , on_press = self.Show_hide_passwd , size_hint = (0.3 , 0.5) ,background_color = [0,0,0,0] , color = [0 , 0, 0 ,1]  , font_size = "25dp"))
-
-        # Loggingbox = BoxLayout(orientation = "vertical" , padding = ["20dp" , "50dp" ,"20dp" ,"50dp"] , spacing = "20dp")
-        # LoggingButtons = BoxLayout()
-        # RememberMe = BoxLayout()
-        
-        # Loggingbox.add_widget(self.login)
-        # Loggingbox.add_widget(holderForPasswd)
-        # Loggingbox.add_widget(RememberMe)
-        # Loggingbox.add_widget(LoggingButtons)
-        
-        
-        # RememberMe.add_widget(CheckBox())
-        # tmp = Label(text = "Remember me" , halign = "left")
-        # def xyz(obj , *args):
-        #     obj.text_size = obj.size
-
-        # tmp.bind(on_size = xyz)
-       
-        # RememberMe.add_widget(tmp)
-
-
-        
-
-        # LoggingButtons.add_widget(Button(text = "Log in" , size_hint = (1 , 0.5) , on_press = self.Dologin))
-        
-
-        # LoggingButtons.add_widget(Button(text = "Sign up" , size_hint = (1 , 0.5) , on_press = self.Dosignup))
-
+    
         up.add_widget(Button(size_hint = (0.7 , 1)))
         up.add_widget(LogBox)
-        # up.add_widget(Loggingbox)
+
 
         self.holder.add_widget(up)
         self.holder.add_widget(self.games)
@@ -127,10 +130,12 @@ class MenuScreen(Screen):
 
         response = login(user_name=name , password=passwd)
 
-        print(response)
+        
 
         if response == True :
             storage.current_user = storage.accounts[name]
+        else:
+            self.info.text = response
     
     def Dosignup(self ,*args):
         
@@ -141,16 +146,20 @@ class MenuScreen(Screen):
 
         response = create_account(user_name=name , password=passwd)
 
-        print(response)
+        if response == True :
+            storage.current_user = storage.accounts[name]
+        else:
+            self.info.text = response
 
     def Show_hide_passwd(self, obj , *args):
-        
-        if obj.text == "Hide":
-            self.password.password = True
-            obj.text = "Show"
-        elif obj.text == "Show":
+        if obj.mode == 0:
             self.password.password = False
-            obj.text = "Hide"
+            obj.mode = 1
+            obj.source = "photos/hide.png"
+        elif obj.mode == 1:
+            self.password.password = True
+            obj.mode = 0
+            obj.source = "photos/show.png"
     
 
 class BetterInput(TextInput):
@@ -158,11 +167,16 @@ class BetterInput(TextInput):
         super().__init__(**kwargs)
         self.halign = "left"
         self.font_size = "20dp"
-
+        self.background_color = [1,1,1,1] 
+        self.background_normal =  'photos/white.png'
+        self.background_active ='photos/white.png'
+        self.font_name = "RobotoMono-Regular"
     def on_text(self , *args):
        
         self.text = self.text.replace(" " , "")
-        self.text = self.text.lower()
+        
+        if not self.ispasswd:
+            self.text = self.text.lower()
 
         if len(self.text) >= 15:
             self.text = self.text[:15]
@@ -180,7 +194,23 @@ class holder(BoxLayout):
             
             self.rect = Rectangle(size=self.size,pos=self.pos , source = "photos/MenuBackground.png")
             self.bind(pos = update_rect,size = update_rect)
-            
+
+class LBH(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    def on_size(self , *args):
+        self.width = self.height * (500/297)
+class LeftLabel(Label):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    def on_size(self , *args):
+        self.text_size = self.size
+
+class showhide(ButtonBehavior , Image):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.mode = 0
+       
 
 def update_rect(obj, *args): # Update canvas rectangle for backgrounds
 
@@ -193,7 +223,8 @@ def update_circle(obj, *args): # Update canvas rectangle for backgrounds
 
 def add_bg(obj , color , opacity):
     with obj.canvas.before:
-        with obj.canvas.before:
             Color(rgba = hex_to_kv(color , opacity))
             obj.rect = Rectangle(size=obj.size,pos=obj.pos)
             obj.bind(pos = update_rect,size = update_rect)
+
+

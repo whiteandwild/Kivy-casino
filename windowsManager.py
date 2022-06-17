@@ -19,26 +19,20 @@ from menuwindow import MenuScreen
 from globals import * 
 
 
-
-
-
-
 class TestApp(App):
 
     def build(self):
         
         self.sm = ScreenManager(transition=FadeTransition())
 
-        """
-        Window priority system for easier ui programming
-        """
         self.screens = {0 : MenuScreen ,1 : LowerHigher}
 
         self.sm.add_widget(MenuScreen())
-        # for s in sorted(self.screens): self.sm.add_widget(self.screens[s]())
+    
         
         create_guest()
         load_users_file()
+        
         # fix_accounts()
       
         return self.sm
@@ -61,4 +55,6 @@ if __name__ == '__main__':
     
     TestApp().run()
 
+# To do:
+#   - Right click during betting LowerHigher
 
