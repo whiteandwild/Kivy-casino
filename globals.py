@@ -35,14 +35,14 @@ def return_coins():
 def max_coins(): 
     return storage.current_user.balance
 
-def bet_end(is_win , ratio):
+def bet_end(is_win , coins_won):
 
     tmp = storage.current_bet
     storage.current_bet = 0
 
     if not is_win : return 0
     
-    coins_won = tmp * ratio * 2
+    # coins_won = tmp * ratio * 2
     storage.current_user.balance += coins_won
     save()
     return coins_won
@@ -95,12 +95,9 @@ def delete_account(user_name):
     
 
 def login(user_name , password):
-
-
     print(storage.accounts)
     if user_name not in storage.accounts: # Not existing username
          return "Non-exitsing username"       
-         raise NoUserException
     if storage.accounts[user_name].Active == False : 
         return "Account disabled"
     elif check_password(password ,storage.accounts[user_name].password) == False: 

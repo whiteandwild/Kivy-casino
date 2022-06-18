@@ -55,6 +55,3 @@ if __name__ == '__main__':
     
     TestApp().run()
 
-# To do:
-#   - Right click during betting LowerHigher
-

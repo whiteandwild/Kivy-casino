@@ -42,11 +42,22 @@ class MenuScreen(Screen):
         self.password.ispasswd = True
         self.login.ispasswd = False
 
-        LogBox = BoxLayout(padding = ["40dp" , "60dp" , "40dp" , "60dp"] , orientation = 'vertical')
+        self.LogBox = BoxLayout(padding = ["40dp" , "60dp" , "40dp" , "60dp"] , orientation = 'vertical')
         
  
+        up.add_widget(Button(size_hint = (0.7 , 1)))
+        up.add_widget(self.LogBox)
+
+
+        self.holder.add_widget(up)
+        self.holder.add_widget(self.games)
+
+        self.add_widget(self.holder)
+        self.CreateLoginBox()
+
+    def CreateLoginBox(self):
         Al = AnchorLayout(anchor_x = "center") # Center Login widget
-        LogBox.add_widget(Al)
+        self.LogBox.add_widget(Al)
 
         LogBoxholder = LBH(orientation = 'vertical' , size_hint = (None , 0.9) , width = 500)
         Al.add_widget(LogBoxholder)
@@ -109,16 +120,6 @@ class MenuScreen(Screen):
         LogBoxholder.add_widget(Creds)
         LogBoxholder.add_widget(Login_Buttons)
 
-
-    
-        up.add_widget(Button(size_hint = (0.7 , 1)))
-        up.add_widget(LogBox)
-
-
-        self.holder.add_widget(up)
-        self.holder.add_widget(self.games)
-
-        self.add_widget(self.holder)
 
     def Dologin(self , *args):
         

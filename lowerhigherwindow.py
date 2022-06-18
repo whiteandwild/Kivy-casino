@@ -22,11 +22,7 @@ from kivy.uix.popup import Popup
 
 from cards import *
 from globals import *
-
-# Problems:
-#   - Storage.c_root causes problems when going twice to same screen
-#   - Change it to more local variable
-
+from wincalculations import LowerHigherWin
 
 class LowerHigher(Screen):
     def __init__(self, **kw):
@@ -87,7 +83,7 @@ class LowerHigher(Screen):
 
         self.menu = Button(text = "MENU" , background_color = hex_to_kv("#DED5CA") , background_normal = "" , on_press = self.change_to_menu)
         
-        print(id(self.menu))
+    
         self.Buttons = BoxLayout(size_hint = (None , None) , size = (150 , 75) , pos_hint = {"right" : 1} , spacing = 5 , padding = 5)
         self.Buttons.add_widget(Button(text = "INFO" , background_color = hex_to_kv("#DED5CA") , background_normal = "" , on_press = self.info))
         self.Buttons.add_widget(self.menu)
@@ -253,7 +249,8 @@ class LowerHigher(Screen):
             result = compare_cards(self.CardA , self.CardB , x)
             if storage.current_bet == 0: result = None
             else:
-              new_bet = bet_end(result , self.currentStreak)
+              coins_won = LowerHigherWin(storage.current_bet, self.currentCards , self.CardA ,self.count_jokers, x , self.currentStreak)
+              new_bet = bet_end(result , coins_won)
         
 
         self.GS.Cardshow.resize_card_A()
@@ -724,8 +721,7 @@ class BettingWindow(BoxLayout):
         self.button_mode = 0
     
     def button_action(self , *args):
-        print(self.parent.parent)
-        
+       
         if self.button_mode:
 
             self.ref.GS.roundStart()
@@ -842,13 +838,19 @@ class AmountInput(TextInput):
         self.font_size = "30dp" 
         self.halign = "center" 
         self.valign ='center'
+        self.background_normal =  'photos/white.png'
+        self.background_active ='photos/white.png'
         self.size_hint = (1, 0.5)
         
         self.multiline = False
-        
+        self.bind(on_touch_down = self.mouseclick)
+
     def add_coins(self , to_add):
         tmp = int(self.text)
-        tmp += to_add
+        if self.mouse == "left":
+            tmp += to_add
+        if self.mouse == "right":
+            tmp -= to_add
         if tmp > 999999 :
             tmp = 999999
         elif tmp < 0:
@@ -870,6 +872,8 @@ class AmountInput(TextInput):
         
         if len(self.text) >= 7:
             self.text = self.text[:7]
+    def mouseclick(self,instance ,touch):
+        self.mouse = touch.button
             
 
 
