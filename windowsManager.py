@@ -23,6 +23,11 @@ class TestApp(App):
 
     def build(self):
         
+        load_users_file()
+        # fix_accounts()
+        if not SearchAutoLogin():
+            create_guest()
+
         self.sm = ScreenManager(transition=FadeTransition())
 
         self.screens = {0 : MenuScreen ,1 : LowerHigher}
@@ -30,10 +35,10 @@ class TestApp(App):
         self.sm.add_widget(MenuScreen())
     
         
-        create_guest()
-        load_users_file()
         
-        # fix_accounts()
+        
+        
+       
       
         return self.sm
 
@@ -54,4 +59,13 @@ if __name__ == '__main__':
     Window.minimum_width, Window.minimum_height = Window.size 
     
     TestApp().run()
+
+    # After close:
+    return_coins()
+    save()
+
+
+# To do :
+
+#       - Animate login
 

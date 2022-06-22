@@ -24,7 +24,7 @@ def LowerHigherWin(bet , cards , c_card ,jokers ,choose , mul):
             if card.score > c_cardScore: MatchingCards +=1
         
     ratio = (MatchingCards / totalCards)
-    # print(ratio , MatchingCards , totalCards)
+
     
     if MatchingCards == 0 : return 0
 
@@ -34,7 +34,7 @@ def LowerHigherWin(bet , cards , c_card ,jokers ,choose , mul):
         k = 10 * MatchingCards ** (log((1/5) , totalCards/2))
         
 
-
+    print(bet * k * mul  , k , mul)
     
     return int(bet * k * mul)
 
