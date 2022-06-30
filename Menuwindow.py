@@ -17,6 +17,7 @@ from kivy.uix.behaviors import ButtonBehavior
 # Other
 from globals import *
 from universalwidgets import *
+from TerminalPopup import Terminal
 
 class MenuScreen(Screen):
     def __init__(self, **kw):
@@ -216,6 +217,7 @@ class MenuScreen(Screen):
             self.totalBetsLabel.text =f"Total bets : {storage.current_user.totalBets} coins" 
             self.winRatioLabel.text = f"Win ratio : {calc_winratio(storage.current_user)}%"
             self.balance.text = f"{storage.current_user.balance} coins"
+            self.uname.text = storage.current_user.user_name
 
 
     def Dologin(self , *args):
@@ -259,6 +261,7 @@ class MenuScreen(Screen):
     def on_login(self , *args):
         self.update_stats()
         self.change_to_profile()
+        self.terminal = Terminal()
 
     def on_logout(self ,obj, *args):
         logout()
@@ -291,8 +294,9 @@ class MenuScreen(Screen):
             self.update_stats()
 
     def open_terminal(self , *args):
-        storage.current_user.reset()
-        self.update_stats()
+        # storage.current_user.reset()
+        self.terminal.open()
+        # self.update_stats()
 
 
 class holder(BoxLayout):

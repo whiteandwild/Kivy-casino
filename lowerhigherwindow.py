@@ -140,7 +140,7 @@ class LowerHigher(Screen):
             self.CB.box.clear_self()
             self.currentStreak = 1
 
-            for i in range(10): #roll 10 cards to throw
+            for i in range(5): #roll 10 cards to throw
                 tmp = choose_random_card(self.currentCards)
                 self.currentCards.remove(tmp)
                 self.CB.box.add_card(tmp.src)
@@ -179,12 +179,11 @@ class LowerHigher(Screen):
                 self.GS.Cardshow.animate_background(0)
                 self.timer.clock.text = "You win\n:)"
                 
-                self.currentStreak += 0.3
-                
+                # self.currentStreak = round(self.currentStreak + 0.2 , 1)
                 storage.current_bet = 0
                 make_bet(new_bet)
 
-                if self.currentStreak >= 2:
+                if self.currentStreak >= 1.8:
                     return_coins()
                     Clock.schedule_once(reset_widgets , 3)
                     return
@@ -350,7 +349,7 @@ class CardsBoard(BoxLayout):
 class Box(GridLayout): # Cards displayer
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.cols = 7
+        self.cols = 5
         self.rows = 2
         self.pos_hint = {"top" :1}
         self.size_hint = (1 , 1)

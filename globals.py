@@ -82,6 +82,7 @@ class user:
         self.balance = 1000
         self.totalBets = 0
         self.isHidden = False
+        self.isAdmin = False
         self.Active = True
         self.Autologin = False
         self.maxBet = 0
@@ -90,7 +91,7 @@ class user:
         self.loses = 0
 
     def __str__(self) -> str: #print info about user
-        return f'{self.user_name}   balance : {self.balance} | total bets {self.totalBets}'
+        return f'{self.user_name} balance : {self.balance} | total bets {self.totalBets}'
 
     def reset(self):
         self.balance = 1000
@@ -111,10 +112,12 @@ def save(): #saves storage.accounts
     with open("secret.pkl" , "wb") as secret:
         pickle.dump(storage.accounts , secret)
 
-def create_account(user_name , password):
+def create_account(user_name , password ,rememberme):
     if user_name in storage.accounts : return "User already exists"
 
     storage.accounts[user_name] = user(user_name , password , is_guest= False)
+    if rememberme:
+        storage.current_user.Autologin = True
     save()
     return True
     

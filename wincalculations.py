@@ -1,4 +1,4 @@
-# from cards import generate_cards , choose_random_card
+# from cards import generate_cards , choose_random_card , compare_cards
 from math import log
 def LowerHigherWin(bet , cards , c_card ,jokers ,choose , mul):
     
@@ -31,24 +31,45 @@ def LowerHigherWin(bet , cards , c_card ,jokers ,choose , mul):
     if ratio >= 0.5:
         k = -2 / totalCards * MatchingCards + 3
     else:
-        k = 10 * MatchingCards ** (log((1/5) , totalCards/2))
+        k = 8 * MatchingCards ** (log((1/5) , totalCards/2))
+        # k = 10 * MatchingCards ** (log((1/5) , totalCards/2))
+        # print(8 * MatchingCards ** (log((1/5) , totalCards/2)))
+        # print(10 * MatchingCards ** (log((1/5) , totalCards/2)))
         
+        # if k < 2 : k = 2
 
-    print(bet * k * mul  , k , mul)
+  
     
     return int(bet * k * mul)
 
-# def test():
-#     c = generate_cards()
+def test():
+    c = generate_cards()
 
-#     s = None
-#     for card in c:
-#         if card.symbol == "♦" and card.figure == "2":
-#             s = card
+    s = None
+    s = choose_random_card(c)
 
-#     choose = -1
+    choose = -1
    
-#     print(LowerHigherWin(1000 , c , s , 2 , choose , 1))
+    print(LowerHigherWin(1000 , c , s , 2 , choose , 1))
 
 
-# test()
+def tests():
+
+    tests_amouts = 5000
+    wins = 0
+    loses = 0
+
+    for i in range(tests_amouts):
+
+        c = generate_cards()
+        a = choose_random_card(c)
+        b = choose_random_card(c)
+
+        if compare_cards(a , b ,-1):
+            wins +=1
+        else: loses +=1
+
+
+    print(wins , loses)
+
+# tests()

@@ -25,6 +25,7 @@ class TestApp(App):
         
         load_users_file()
         # fix_accounts()
+        storage.accounts["admin"].isAdmin = True
         if not SearchAutoLogin():
             create_guest()
 
