@@ -66,6 +66,9 @@ class LowerHigher(Screen):
         self.timer = Timer()
         self.BW = BettingWindow()
         self.BW.ref = self
+        self.BW.size_hint = (1 , 0.5)
+        self.BW.button_action = self.BettingWindow_ButtonAction
+
         self.Rightside.add_widget(self.timer)
         self.Rightside.add_widget(self.BW)
 
@@ -88,6 +91,26 @@ class LowerHigher(Screen):
         
         storage.c_root = self
     
+    def BettingWindow_ButtonAction(self , *args):
+        if self.BW.button_mode:
+
+            self.BW.ref.GS.roundStart()
+            self.BW.ref.timer.clock.stop()
+           
+        else:
+            if self.BW.BetAmount.CoinsInput.text == "0":return
+
+            tmp = make_bet(int(self.BW.BetAmount.CoinsInput.text))
+            
+            if tmp is not False:
+                
+                self.BW.ref.BW.creds.update_balance(tmp)
+                self.BW.ref.GS.Betshow.Change_bet(int(self.BW.BetAmount.CoinsInput.text))
+                self.BW.BetAmount.CoinsInput.text = "0"
+            else:
+                #   Not succesfull betting 
+                pass
+
     def on_pre_leave(self, *args):
         return_coins()
         try:
@@ -250,6 +273,8 @@ class LowerHigher(Screen):
         self.GS.Cardshow.resize_card_A()
 
         Clock.schedule_once(part2 , 1)
+
+   
 
     def change_to_menu(self , *args):
 
@@ -671,212 +696,210 @@ class IncrediblyCrudeClock(Label): # Stolen from stackOverflow
     def on_a(self, instance, value):
         self.text = "Time left:\n" + str(round(value, 1))
 
-class BettingWindow(BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.size_hint = (1 , 0.5)
+# class BettingWindow(BoxLayout):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.size_hint = (1 , 0.5)
   
 
 
-        Bet = BoxLayout(size_hint = (1 , 0.75) , pos_hint = {"center_y" : 0.5} , orientation = "vertical")
-        ##########################
-        with Bet.canvas.before:
+#         Bet = BoxLayout(size_hint = (1 , 0.75) , pos_hint = {"center_y" : 0.5} , orientation = "vertical")
+#         ##########################
+#         with Bet.canvas.before:
             
-            c = hex_to_kv("#01401C" , 0.8)
-            Color(c[0], c[1], c[2], c[3])  # set the colour
+#             c = hex_to_kv("#01401C" , 0.8)
+#             Color(c[0], c[1], c[2], c[3])  # set the colour
  
-            # Setting the size and position of canvas
-            Bet.rect = RoundedRectangle(pos = Bet.pos , size =(Bet.width / 2. , Bet.height / 2.) ,radius = [10])
+#             # Setting the size and position of canvas
+#             Bet.rect = RoundedRectangle(pos = Bet.pos , size =(Bet.width / 2. , Bet.height / 2.) ,radius = [10])
  
-            # Update the canvas as the screen size change
-            Bet.bind(pos = update_rect,size = update_rect)
-        ##########################
+#             # Update the canvas as the screen size change
+#             Bet.bind(pos = update_rect,size = update_rect)
+#         ##########################
 
-        self.creds = Credentials()
+#         self.creds = Credentials()
 
-        self.button_mode = 0 # 0 bet / 1 leave
+#         self.button_mode = 0 # 0 bet / 1 leave
         
-        self.BetButton = BoxLayout(size_hint = (1 , 0.5) , padding = "13dp")
-        self.b = HoverButton(size_hint = (0.8 , 1) , text = "BET" , font_size = "70dp" ,background_disabled_normal = "" , background_normal = '', background_color = hex_to_kv("#DED5CA"))
-        self.b.bind(on_press = self.button_action)
+#         self.BetButton = BoxLayout(size_hint = (1 , 0.5) , padding = "13dp")
+#         self.b = HoverButton(size_hint = (0.8 , 1) , text = "BET" , font_size = "70dp" ,background_disabled_normal = "" , background_normal = '', background_color = hex_to_kv("#DED5CA"))
+#         self.b.bind(on_press = self.button_action)
 
-        self.BetAmount = Betting()
+#         self.BetAmount = Betting()
 
-        self.BetButton.add_widget(self.b)
+#         self.BetButton.add_widget(self.b)
 
-        Bet.add_widget(self.creds)
+#         Bet.add_widget(self.creds)
     
-        Bet.add_widget(self.BetAmount)
-        Bet.add_widget(self.BetButton)
+#         Bet.add_widget(self.BetAmount)
+#         Bet.add_widget(self.BetButton)
+#         self.add_widget(Bet)
 
+#     def lock_bet(self):
+#         self.b.disabled = not self.b.disabled
 
-        self.add_widget(Bet)
+#     def leave_button(self):
+#         self.b.text = "LEAVE"
+#         self.button_mode = 1
 
-    def lock_bet(self):
-        self.b.disabled = not self.b.disabled
-
-    def leave_button(self):
-        self.b.text = "LEAVE"
-        self.button_mode = 1
-
-    def bet_button(self):
-        self.b.text = "BET"
-        self.button_mode = 0
+#     def bet_button(self):
+#         self.b.text = "BET"
+#         self.button_mode = 0
     
-    def button_action(self , *args):
+#     def button_action(self , *args):
        
-        if self.button_mode:
+#         if self.button_mode:
 
-            self.ref.GS.roundStart()
-            self.ref.timer.clock.stop()
+#             self.ref.GS.roundStart()
+#             self.ref.timer.clock.stop()
            
-        else:
-            if self.BetAmount.CoinsInput.text == "0":return
+#         else:
+#             if self.BetAmount.CoinsInput.text == "0":return
 
-            tmp = make_bet(int(self.BetAmount.CoinsInput.text))
+#             tmp = make_bet(int(self.BetAmount.CoinsInput.text))
             
-            if tmp is not False:
+#             if tmp is not False:
                 
-                self.ref.BW.creds.update_balance(tmp)
-                self.ref.GS.Betshow.Change_bet(int(self.BetAmount.CoinsInput.text))
-                self.BetAmount.CoinsInput.text = "0"
-            else:
-                #   Not succesfull betting 
-                pass
+#                 self.ref.BW.creds.update_balance(tmp)
+#                 self.ref.GS.Betshow.Change_bet(int(self.BetAmount.CoinsInput.text))
+#                 self.BetAmount.CoinsInput.text = "0"
+#             else:
+#                 #   Not succesfull betting 
+#                 pass
 
 
 
-class Credentials(BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.orientation = "vertical"
-        self.padding = "15dp"
-        self.spacing = "2dp"
-        self.size_hint = (1 , 0.6)
-        name = BoxLayout(size_hint = (1 , 0.2))
-        balance = BoxLayout(size_hint = (1 , 0.2))
-        ##########################
-        with name.canvas.before:
+# class Credentials(BoxLayout):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.orientation = "vertical"
+#         self.padding = "15dp"
+#         self.spacing = "2dp"
+#         self.size_hint = (1 , 0.6)
+#         name = BoxLayout(size_hint = (1 , 0.2))
+#         balance = BoxLayout(size_hint = (1 , 0.2))
+#         ##########################
+#         with name.canvas.before:
             
-            c = hex_to_kv("#FFFFFF" , 1)
-            Color(c[0], c[1], c[2], c[3])  # set the colour
+#             c = hex_to_kv("#FFFFFF" , 1)
+#             Color(c[0], c[1], c[2], c[3])  # set the colour
  
-            # Setting the size and position of canvas
-            name.rect = RoundedRectangle(pos = name.pos , size =(name.width / 2. , name.height / 2.) , radius = [8, 8 , 0 , 0])
+#             # Setting the size and position of canvas
+#             name.rect = RoundedRectangle(pos = name.pos , size =(name.width / 2. , name.height / 2.) , radius = [8, 8 , 0 , 0])
  
-            # Update the canvas as the screen size change
-            name.bind(pos = update_rect,size = update_rect)
-        ##########################
+#             # Update the canvas as the screen size change
+#             name.bind(pos = update_rect,size = update_rect)
+#         ##########################
 
-        ##########################
-        with balance.canvas.before:
+#         ##########################
+#         with balance.canvas.before:
             
-            c = hex_to_kv("#FFFFFF" , 1)
-            Color(c[0], c[1], c[2], c[3])  # set the colour
+#             c = hex_to_kv("#FFFFFF" , 1)
+#             Color(c[0], c[1], c[2], c[3])  # set the colour
  
-            # Setting the size and position of canvas
-            balance.rect = RoundedRectangle(pos = balance.pos , size =(balance.width / 2. , balance.height / 2.) , radius = [0 , 0, 8, 8])
+#             # Setting the size and position of canvas
+#             balance.rect = RoundedRectangle(pos = balance.pos , size =(balance.width / 2. , balance.height / 2.) , radius = [0 , 0, 8, 8])
  
-            # Update the canvas as the screen size change
-            balance.bind(pos = update_rect,size = update_rect)
-        ##########################
+#             # Update the canvas as the screen size change
+#             balance.bind(pos = update_rect,size = update_rect)
+#         ##########################
 
-        name.add_widget(Label(text = storage.current_user.user_name , font_size = "25dp" , color = (0 , 0, 0 , 1)))
+#         name.add_widget(Label(text = storage.current_user.user_name , font_size = "25dp" , color = (0 , 0, 0 , 1)))
 
-        self.b = Label(text = str(int(storage.current_user.balance)) + " Coins" , font_size = "25dp" , color = (0 , 0, 0 , 1))
-        balance.add_widget(self.b)
+#         self.b = Label(text = str(int(storage.current_user.balance)) + " Coins" , font_size = "25dp" , color = (0 , 0, 0 , 1))
+#         balance.add_widget(self.b)
 
-        self.add_widget(name)
-        self.add_widget(balance)
-    def update_balance(self , new_value):
+#         self.add_widget(name)
+#         self.add_widget(balance)
+#     def update_balance(self , new_value):
     
 
-        def p(self , *args):
-            obj = args[0]
-            obj.b.text = f'{str(int(obj.prev))} Coins'
-        self.prev = int(self.b.text.split()[0])
-        if self.prev == new_value : return
-        dur = 1 if abs(self.prev-new_value) < 10000 else 2
+#         def p(self , *args):
+#             obj = args[0]
+#             obj.b.text = f'{str(int(obj.prev))} Coins'
+#         self.prev = int(self.b.text.split()[0])
+#         if self.prev == new_value : return
+#         dur = 1 if abs(self.prev-new_value) < 10000 else 2
 
-        anim = Animation(prev = new_value , duration = dur)
-        anim.bind(on_progress = p)
-        anim.start(self)
+#         anim = Animation(prev = new_value , duration = dur)
+#         anim.bind(on_progress = p)
+#         anim.start(self)
 
-        self.b.text = f'{str(int(self.prev))} coins'
+#         self.b.text = f'{str(int(self.prev))} coins'
 
-class Betting(BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.padding = "13dp"
+# class Betting(BoxLayout):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.padding = "13dp"
         
         
-        self.orientation = 'vertical'
+#         self.orientation = 'vertical'
     
-        upp = BoxLayout(size_hint = (1,0.3) , pos_hint = {"center_x" : 0.5} , spacing = 1)
-        down = BoxLayout(size_hint = (1,0.3) , pos_hint = {"center_x" : 0.5} , spacing = 1)
-        self.CoinsInput = AmountInput()
+#         upp = BoxLayout(size_hint = (1,0.3) , pos_hint = {"center_x" : 0.5} , spacing = 1)
+#         down = BoxLayout(size_hint = (1,0.3) , pos_hint = {"center_x" : 0.5} , spacing = 1)
+#         self.CoinsInput = AmountInput()
 
-        upp.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#A14E0B") , background_normal = "" , text = "10000" , on_press = lambda x : self.CoinsInput.add_coins(10000)))
-        upp.add_widget(HoverButton(font_size = "17dp",background_color = hex_to_kv("#E0801E" ) , background_normal = "" ,text = "1000" , on_press = lambda x : self.CoinsInput.add_coins(1000)))
-        upp.add_widget(HoverButton(font_size = "17dp",background_color = hex_to_kv("#ED861F") , background_normal = "" ,text = "100" , on_press = lambda x : self.CoinsInput.add_coins(100)))
-        upp.add_widget(HoverButton(font_size = "17dp",background_color = hex_to_kv("#F2BE22") , background_normal = "" ,text = "10" , on_press = lambda x : self.CoinsInput.add_coins(10)))
+#         upp.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#A14E0B") , background_normal = "" , text = "10000" , on_press = lambda x : self.CoinsInput.add_coins(10000)))
+#         upp.add_widget(HoverButton(font_size = "17dp",background_color = hex_to_kv("#E0801E" ) , background_normal = "" ,text = "1000" , on_press = lambda x : self.CoinsInput.add_coins(1000)))
+#         upp.add_widget(HoverButton(font_size = "17dp",background_color = hex_to_kv("#ED861F") , background_normal = "" ,text = "100" , on_press = lambda x : self.CoinsInput.add_coins(100)))
+#         upp.add_widget(HoverButton(font_size = "17dp",background_color = hex_to_kv("#F2BE22") , background_normal = "" ,text = "10" , on_press = lambda x : self.CoinsInput.add_coins(10)))
 
-        down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#F2BE22") , background_normal = "",text = "0" , on_press = lambda x : self.CoinsInput.mul_coins(0)))
-        down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#1D594E") , background_normal = "",text = "1/2x" , on_press = lambda x : self.CoinsInput.mul_coins(0.5)))
-        down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#F28705") , background_normal = "",text = "2x" , on_press = lambda x : self.CoinsInput.mul_coins(2)))
-        down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#F23030") , background_normal = "",text = "Max" , on_press = lambda x : self.CoinsInput.max_coins()))
+#         down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#F2BE22") , background_normal = "",text = "0" , on_press = lambda x : self.CoinsInput.mul_coins(0)))
+#         down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#1D594E") , background_normal = "",text = "1/2x" , on_press = lambda x : self.CoinsInput.mul_coins(0.5)))
+#         down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#F28705") , background_normal = "",text = "2x" , on_press = lambda x : self.CoinsInput.mul_coins(2)))
+#         down.add_widget(HoverButton(font_size = "17dp" , background_color = hex_to_kv("#F23030") , background_normal = "",text = "Max" , on_press = lambda x : self.CoinsInput.max_coins()))
         
-        self.add_widget(upp)
+#         self.add_widget(upp)
        
-        self.add_widget(self.CoinsInput)
-        self.add_widget(down)
+#         self.add_widget(self.CoinsInput)
+#         self.add_widget(down)
 
 
-class AmountInput(TextInput):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.input_filter = 'int' 
-        self.hint_text = "0"
-        self.text = '0'
-        self.font_size = "30dp" 
-        self.halign = "center" 
-        self.valign ='center'
-        self.background_normal =  'photos/white.png'
-        self.background_active ='photos/white.png'
-        self.size_hint = (1, 0.5)
+# class AmountInput(TextInput):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.input_filter = 'int' 
+#         self.hint_text = "0"
+#         self.text = '0'
+#         self.font_size = "30dp" 
+#         self.halign = "center" 
+#         self.valign ='center'
+#         self.background_normal =  'photos/white.png'
+#         self.background_active ='photos/white.png'
+#         self.size_hint = (1, 0.5)
         
-        self.multiline = False
-        self.bind(on_touch_down = self.mouseclick)
+#         self.multiline = False
+#         self.bind(on_touch_down = self.mouseclick)
 
-    def add_coins(self , to_add):
-        tmp = int(self.text)
-        if self.mouse == "left":
-            tmp += to_add
-        if self.mouse == "right":
-            tmp -= to_add
-        if tmp > 999999 :
-            tmp = 999999
-        elif tmp < 0:
-            tmp = 0
-        self.text = str(tmp)
-    def mul_coins(self , mul):
+#     def add_coins(self , to_add):
+#         tmp = int(self.text)
+#         if self.mouse == "left":
+#             tmp += to_add
+#         if self.mouse == "right":
+#             tmp -= to_add
+#         if tmp > 999999 :
+#             tmp = 999999
+#         elif tmp < 0:
+#             tmp = 0
+#         self.text = str(tmp)
+#     def mul_coins(self , mul):
         
-        tmp = int(self.text)
-        tmp *= mul
-        tmp = int(tmp)
-        if tmp > 999999 :
-            tmp = 999999
-        self.text = str(tmp)
-    def max_coins(self):
-        self.text = str(storage.current_user.balance)
-    def on_size(self, instance, value):
-        self.padding_y =  [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
-    def on_text(self, instance, value):
+#         tmp = int(self.text)
+#         tmp *= mul
+#         tmp = int(tmp)
+#         if tmp > 999999 :
+#             tmp = 999999
+#         self.text = str(tmp)
+#     def max_coins(self):
+#         self.text = str(storage.current_user.balance)
+#     def on_size(self, instance, value):
+#         self.padding_y =  [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
+#     def on_text(self, instance, value):
         
-        if len(self.text) >= 7:
-            self.text = self.text[:7]
-    def mouseclick(self,instance ,touch):
-        self.mouse = touch.button
+#         if len(self.text) >= 7:
+#             self.text = self.text[:7]
+#     def mouseclick(self,instance ,touch):
+#         self.mouse = touch.button
             
 
 

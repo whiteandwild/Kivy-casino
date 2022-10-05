@@ -183,19 +183,6 @@ def fix_accounts():
         u = storage.accounts[acc]
         for attr in attrs:
             exec(f"u.{attr} = getattr(u , '{attr}' , tmp.{attr})")
-        
-        
-
-        # tmp = user(u.user_name,None , True)
-        
-        # tmp.password = getattr(u , "password" , "")
-        # tmp.balance = getattr(u , "balance" , 0)
-        # tmp.totalBets = getattr(u , "totalBets" , 0)
-        # tmp.isHidden = getattr(u , "isHidden" , False)
-        # tmp.Autologin = getattr(u , "Autologin" , False)
-        # tmp.Active = getattr(u , "Active" , True)
-
-        # storage.accounts[acc] = tmp
     print(storage.accounts)
     save()
-        
+

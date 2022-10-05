@@ -11,22 +11,24 @@ class card:
         self.figure = figure
         if figure != "joker":
             self.src = f"photos/{cards_orders[figure][0]}_of_{cards_symbols[symbol][0]}.png" # Src for card's photo
+        
 
     def __str__(self) -> str:
         return f'{self.symbol}{self.figure}'
 
-def generate_cards(): # Generates all cards
+def generate_cards(nojokers = False): # Generates all cards
     cards = []
     for figure in cards_orders.keys():
         for symbol in cards_symbols.keys():
             c = card(symbol , figure)
             c.score = cards_symbols[symbol][1]  + cards_orders[figure][1] * 10
             cards.append(c)
-    Rjoker = card(None , "joker")
-    Bjoker = card(None , "joker")
-    Rjoker.score , Bjoker.score = 130 , 131
-    Rjoker.src , Bjoker.src = "photos/red_joker.png" , "photos/black_joker.png"
-    cards.extend([Rjoker , Bjoker])
+    if not nojokers:
+        Rjoker = card(None , "joker")
+        Bjoker = card(None , "joker")
+        Rjoker.score , Bjoker.score = 130 , 131
+        Rjoker.src , Bjoker.src = "photos/red_joker.png" , "photos/black_joker.png"
+        cards.extend([Rjoker , Bjoker])
 
     return cards
 

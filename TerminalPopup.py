@@ -95,5 +95,4 @@ class xyzGrid(GridLayout):
         super().__init__(**kwargs)
     def on_size(self , *args):
         return
-        self.minimum_height = max(self.parent.height , self.height)
       

@@ -30,7 +30,7 @@ class MenuScreen(Screen):
         
 
         self.games.add_widget(Button(text="Lower Higher" , on_press = lambda x: App.get_running_app().gen_screen('LowerHigher')))
-        self.games.add_widget(Button())
+        self.games.add_widget(Button(text="Black Jack" , on_press = lambda x: App.get_running_app().gen_screen('BlackJack')))
         self.games.add_widget(Button())
 
         up = BoxLayout()
@@ -216,7 +216,7 @@ class MenuScreen(Screen):
             self.maxWinLabel.text = f"Max win : {storage.current_user.maxWin} coins"
             self.totalBetsLabel.text =f"Total bets : {storage.current_user.totalBets} coins" 
             self.winRatioLabel.text = f"Win ratio : {calc_winratio(storage.current_user)}%"
-            self.balance.text = f"{storage.current_user.balance} coins"
+            # self.balance.text = f"{storage.current_user.balance} coins"
             self.uname.text = storage.current_user.user_name
 
 
@@ -292,6 +292,10 @@ class MenuScreen(Screen):
     def on_pre_enter(self, *args):
         if storage.current_user != None:
             self.update_stats()
+
+    def on_enter(self, *args):
+        if storage.current_user != None:
+            self.balance.text = f"{storage.current_user.balance} coins"
 
     def open_terminal(self , *args):
         # storage.current_user.reset()

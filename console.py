@@ -67,7 +67,7 @@ def set_balance(args): # Set balance of user
 
     tmp.balance = int(args[1])
     save()
-    return True
+    return [f"{args[0]}'s balance is now {tmp.balance}"]
 
 def remove_user(args): # Remove user's account
     tmp = getUser(user_name = args[0],showhidden=True)

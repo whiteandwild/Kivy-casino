@@ -14,6 +14,7 @@ from kivy.core.window import Window # Must be after config setup
 # Screens
 from lowerhigherwindow import LowerHigher
 from menuwindow import MenuScreen
+from BlackJackwindow import BlackJack
 
 # Other
 from globals import * 
@@ -25,7 +26,7 @@ class TestApp(App):
         
         load_users_file()
         # fix_accounts()
-        storage.accounts["admin"].isAdmin = True
+        
         if not SearchAutoLogin():
             create_guest()
 
@@ -34,7 +35,7 @@ class TestApp(App):
         self.screens = {0 : MenuScreen ,1 : LowerHigher}
 
         self.sm.add_widget(MenuScreen())
-    
+        # self.sm.add_widget(BlackJack())
         
         
         
@@ -65,8 +66,4 @@ if __name__ == '__main__':
     return_coins()
     save()
 
-
-# To do :
-
-#       - Animate login
 
